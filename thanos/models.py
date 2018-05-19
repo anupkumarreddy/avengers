@@ -19,7 +19,7 @@ class Fundamentals (models.Model):
     """Model to store all fundamental data for a symbol per year"""
 
     symbol = models.ForeignKey(Symbols, on_delete=models.CASCADE)
-    year = models.DateField()
+    year = models.DateField(null=True, blank=True)
 
     # Per share ratios
     basic_eps_rs = models.FloatField(null=True, blank=True)
@@ -65,5 +65,5 @@ class Fundamentals (models.Model):
     earnings_yield = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return self.symbol + self.year
+        return self.symbol.symbol_name + self.year.strftime("%Y")
 
