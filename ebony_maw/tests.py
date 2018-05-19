@@ -16,6 +16,8 @@ class MawViewTests(TestCase):
         funda.extract_fundamentals()
         self.assertEqual(7.42, float(funda.ratios['Basic EPS (Rs.)']['2017']),
                          "Ratios mismatch Expected : ( {} ), Actual : ( {} )".format(7.42, funda.ratios['Basic EPS (Rs.)']['2017']))
+        self.assertEqual('NOCIL', funda.symbol_name,
+                         "Symbol name mismatch, Expected : ( {} ), Actual : ( {} )".format('NOCIL', funda.symbol_name))
 
     def test_push_to_database(self):
         funda = FundamentalsExtractor()
