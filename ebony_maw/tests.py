@@ -10,7 +10,7 @@ class MawViewTests(TestCase):
         pass
 
     def test_extract_fundamentals(self):
-        funda = FundamentalsExtractor()
+        funda = FundamentalsExtractor(silent=False)
         funda.url = "file:///home/anup/Downloads/Nocil.html"
         logging.info("Ratios extracted are ...")
         funda.extract_fundamentals()
@@ -20,7 +20,7 @@ class MawViewTests(TestCase):
                          "Symbol name mismatch, Expected : ( {} ), Actual : ( {} )".format('NOCIL', funda.symbol_name))
 
     def test_push_to_database(self):
-        funda = FundamentalsExtractor()
+        funda = FundamentalsExtractor(silent=False)
         funda.url = "file:///home/anup/Downloads/Nocil.html"
         logging.info("Ratios extracted are ...")
         funda.extract_fundamentals()

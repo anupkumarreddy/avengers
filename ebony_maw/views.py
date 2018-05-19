@@ -39,6 +39,9 @@ class FundamentalsExtractor:
             self.url = url
             logging.info("URL is set as %s ", url)
 
+    def __valiidate_url(self):
+        pass
+
     def __prepare_soup(self):
         if self.__is_url_present():
             self.my_soup = soup(urllib.urlopen(self.url), "html.parser")
@@ -50,12 +53,15 @@ class FundamentalsExtractor:
 
     def extract_fundamentals(self):
         self.__prepare_soup()
+        # self.__validate_url()
         self.symbol_name = self.my_soup.find('h1', {'class': 'b_42 PT20'}).get_text()
-        logging.info(" Extracting Symbol ( %s ) ...", self.symbol_name)
+        logging.info("  Extracting Symbol ( %s ) ...", self.symbol_name)
         table = self.my_soup.find_all('table', {'class': 'table4'})[2]
         for index, tr in enumerate(table.find_all('tr')):
             td = tr.find_all('td')
-            if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" and td[2].get_text() != "" and td[3].get_text() != "" and td[4].get_text() != "" and td[5].get_text() != "":
+            if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
+                    and td[2].get_text() != "" and td[3].get_text() != "" \
+                    and td[4].get_text() != "" and td[5].get_text() != "":
                 logging.info("  Extracting %s: (%s, %s, %s, %s, %s) ... ", td[0].get_text(),
                              td[1].get_text(),
                              td[2].get_text(),
