@@ -67,3 +67,99 @@ class Fundamentals (models.Model):
     def __str__(self):
         return self.symbol.symbol_name + self.year.strftime("%Y")
 
+
+class BalanceSheet (models.Model):
+
+    symbol = models.ForeignKey(Symbols, on_delete=models.CASCADE)
+    sheet_year = models.DateField(null=True, blank=True)
+
+    equity_share_capital = models.FloatField(null=True, blank=True)
+    reserves_and_surples = models.FloatField(null=True, blank=True)
+    total_share_holders_fund = models.FloatField(null=True, blank=True)
+
+    long_term_borrowings = models.FloatField(null=True, blank=True)
+    deferred_tax_liabilities_net = models.FloatField(null=True, blank=True)
+    long_term_provisions = models.FloatField(null=True, blank=True)
+    total_non_current_liabilities = models.FloatField(null=True, blank=True)
+
+    short_term_borrowings = models.FloatField(null=True, blank=True)
+    trade_payables = models.FloatField(null=True, blank=True)
+    other_current_liabilities = models.FloatField(null=True, blank=True)
+    short_term_provisions = models.FloatField(null=True, blank=True)
+    total_current_libilities = models.FloatField(null=True, blank=True)
+    total_capital_and_liabilities = models.FloatField(null=True, blank=True)
+
+    tangible_assets = models.FloatField(null=True, blank=True)
+    intangible_assets = models.FloatField(null=True, blank=True)
+    capital_work_in_progress = models.FloatField(null=True, blank=True)
+    fixed_assets = models.FloatField(null=True, blank=True)
+
+    non_current_investments = models.FloatField(null=True, blank=True)
+    long_term_loans_and_advances = models.FloatField(null=True, blank=True)
+    total_non_current_assets = models.FloatField(null=True, blank=True)
+
+    inventories = models.FloatField(null=True, blank=True)
+    trade_receivables = models.FloatField(null=True, blank=True)
+    cash_and_cach_equivalents = models.FloatField(null=True, blank=True)
+    short_term_loans_and_advances = models.FloatField(null=True, blank=True)
+    other_current_assets = models.FloatField(null=True, blank=True)
+    total_current_assets = models.FloatField(null=True, blank=True)
+    total_assets = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return self.symbol.symbol_name + self.sheet_year.strftime("%Y")
+
+
+class ProfitAndLossStatement (models.Model):
+
+    symbol = models.ForeignKey(Symbols, on_delete=models.CASCADE)
+    sheet_year = models.DateField(null=True, blank=True)
+
+    revenue_from_operation_gross = models.FloatField(null=True, blank=True)
+    excise_service_tax = models.FloatField(null=True, blank=True)
+    revenue_from_operations = models.FloatField(null=True, blank=True)
+    other_operating_revenue = models.FloatField(null=True, blank=True)
+    total_operating_revenue = models.FloatField(null=True, blank=True)
+    other_income = models.FloatField(null=True, blank=True)
+    total_revenue = models.FloatField(null=True, blank=True)
+
+    cost_of_materials_consumed = models.FloatField(null=True, blank=True)
+    purchase_of_stock_in_trade = models.FloatField(null=True, blank=True)
+    changes_in_inventories = models.FloatField(null=True, blank=True)
+    employee_benefit_expenses = models.FloatField(null=True, blank=True)
+    finance_cost = models.FloatField(null=True, blank=True)
+    depreciation_and_amortisation_expenses = models.FloatField(null=True, blank=True)
+    other_expenses = models.FloatField(null=True, blank=True)
+    total_expenses = models.FloatField(null=True, blank=True)
+
+    profit_loss_before_extraordinary_items = models.FloatField(null=True, blank=True)
+    exceptional_items = models.FloatField(null=True, blank=True)
+    profit_loss_before_tax = models.FloatField(null=True, blank=True)
+    current_tax = models.FloatField(null=True, blank=True)
+    deferred_tax = models.FloatField(null=True, blank=True)
+    tax_for_earliar_years = models.FloatField(null=True, blank=True)
+    total_tax_expense = models.FloatField(null=True, blank=True)
+    profit_loss_after_tax_before_extraordinary_items = models.FloatField(null=True, blank=True)
+    profit_loss_from_continuing_operations = models.FloatField(null=True, blank=True)
+    profit_loss_for_the_period = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return self.symbol.symbol_name + self.sheet_year.strftime("%Y")
+
+
+class CashFlowStatement (models.Model):
+
+    symbol = models.ForeignKey(Symbols, on_delete=models.CASCADE)
+    sheet_year = models.DateField(null=True, blank=True)
+
+    net_profit_loss_before_extraordinary_and_tax = models.FloatField(null=True, blank=True)
+    net_cash_flow_from_operating_activities = models.FloatField(null=True, blank=True)
+    net_cash_used_in_investing_activities = models.FloatField(null=True, blank=True)
+    net_cash_used_from_financing_activities = models.FloatField(null=True, blank=True)
+    foreign_exchange_gains_losses = models.FloatField(null=True, blank=True)
+    net_inc_dec_cash_and_cash_equivalents = models.FloatField(null=True, blank=True)
+    cash_and_cash_equivalents_begin_of_year = models.FloatField(null=True, blank=True)
+    cash_and_cash_equivalents_end_of_year = models.FloatField(null=True, blank=True)
+
+    def __str__(self):
+        return self.symbol.symbol_name + self.sheet_year.strftime("%Y")
