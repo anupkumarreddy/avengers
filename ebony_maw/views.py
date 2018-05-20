@@ -26,6 +26,8 @@ class FundamentalsExtractor:
 
     url = ""
     ratios = {}
+    balance_sheet = {}
+    profit_loss_statement = {}
     log_stream = ""
     symbol_name = ""
 
@@ -53,7 +55,52 @@ class FundamentalsExtractor:
 
     def extract_fundamentals(self):
         self.__prepare_soup()
-        # self.__validate_url()
+        self.extract_ratios()
+
+    def extract_balance_sheet(self):
+        self.__prepare_soup()
+        table = self.my_soup.find_all('table', {'class': 'table4'})[2]
+        for index, tr in enumerate(table.find_all('tr')):
+            td = tr.find_all('td')
+            if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
+                    and td[2].get_text() != "" and td[3].get_text() != "" \
+                    and td[4].get_text() != "" and td[5].get_text() != "":
+                logging.info("  Extracting %s: (%s, %s, %s, %s, %s) ... ", td[0].get_text(),
+                             td[1].get_text(),
+                             td[2].get_text(),
+                             td[3].get_text(),
+                             td[4].get_text(),
+                             td[5].get_text())
+                self.balance_sheet[td[0].get_text()] = {'2017': td[1].get_text().replace(',', ''),
+                                                        '2016': td[2].get_text().replace(',', ''),
+                                                        '2015': td[3].get_text().replace(',', ''),
+                                                        '2014': td[4].get_text().replace(',', ''),
+                                                        '2013': td[5].get_text().replace(',', '')}
+
+    def extract_profit_and_loss_statement(self):
+        self.__prepare_soup()
+        table = self.my_soup.find_all('table', {'class': 'table4'})[2]
+        for index, tr in enumerate(table.find_all('tr')):
+            td = tr.find_all('td')
+            if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
+                    and td[2].get_text() != "" and td[3].get_text() != "" \
+                    and td[4].get_text() != "" and td[5].get_text() != "":
+                logging.info("  Extracting %s: (%s, %s, %s, %s, %s) ... ", td[0].get_text(),
+                             td[1].get_text(),
+                             td[2].get_text(),
+                             td[3].get_text(),
+                             td[4].get_text(),
+                             td[5].get_text())
+                self.profit_loss_statement[td[0].get_text()] = {'2017': td[1].get_text().replace(',', ''),
+                                                                '2016': td[2].get_text().replace(',', ''),
+                                                                '2015': td[3].get_text().replace(',', ''),
+                                                                '2014': td[4].get_text().replace(',', ''),
+                                                                '2013': td[5].get_text().replace(',', '')}
+
+    def extract_cash_flow_statement(self):
+        pass
+
+    def extract_ratios(self):
         self.symbol_name = self.my_soup.find('h1', {'class': 'b_42 PT20'}).get_text()
         logging.info("  Extracting Symbol ( %s ) ...", self.symbol_name)
         table = self.my_soup.find_all('table', {'class': 'table4'})[2]

@@ -9,7 +9,7 @@ class MawViewTests(TestCase):
     def setUp(self):
         pass
 
-    def test_extract_fundamentals(self):
+    def test_extract_ratios(self):
         funda = FundamentalsExtractor(silent=False)
         funda.url = "file:///home/anup/Downloads/Nocil.html"
         logging.info("Ratios extracted are ...")
@@ -29,4 +29,22 @@ class MawViewTests(TestCase):
                          "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(1, Symbols.objects.all().count()))
         self.assertEqual(5, Fundamentals.objects.all().count(),
                          "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(5, Fundamentals.objects.all().count()))
+
+    def test_extract_balance_sheet(self):
+        funda = FundamentalsExtractor(silent=False)
+        funda.url = "file:///home/anup/Downloads/balance_sheet.html"
+        logging.info("Balance sheet numbers extracted are ...")
+        funda.extract_balance_sheet()
+        self.assertEqual(163.58 	, float(funda.balance_sheet['Equity Share Capital']['2017']),
+                         "Balance Sheet mismatch, Expected : ( {} ), Actual : ( {} )".format(163.58,
+                          funda.balance_sheet['Equity Share Capital']['2017']))
+
+    def test_extract_profit_and_loss(self):
+        funda = FundamentalsExtractor(silent=False)
+        funda.url = "file:///home/anup/Downloads/profit_loss.html"
+        logging.info("Profit and Loss Statement numbers extracted are ...")
+        funda.extract_profit_and_loss_statement()
+        self.assertEqual(751.33, float(funda.profit_loss_statement['Total Revenue']['2017']),
+                         "Balance Sheet mismatch, Expected : ( {} ), Actual : ( {} )".format(751.33,
+                          funda.profit_loss_statement['Total Revenue']['2017']))
 
