@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup as soup
 import logging
 import urllib
 from datetime import datetime
+import re
 
 
 class MawMainPage (TemplateView):
@@ -138,6 +139,11 @@ class FundamentalsExtractor:
     cash_flow_statement = {}
     log_stream = ""
     symbol_name = ""
+    base_url = "www.moneycontrol.com"
+    balance_sheet_url = ""
+    profit_loss_url = ""
+    cash_flow_url = ""
+    ratios_url = ""
 
     def __init__(self, url="", silent=True):
         logging.basicConfig(level=logging.INFO)
@@ -152,9 +158,14 @@ class FundamentalsExtractor:
     def __valiidate_url(self):
         pass
 
-    def __prepare_soup(self):
+    def prepare_soup(self):
         if self.__is_url_present():
-            self.my_soup = soup(urllib.urlopen(self.url), "html.parser")
+            my_soup = soup(urllib.urlopen(self.url), "html.parser")
+            financial_links = my_soup.find_all('a', {'href': re.compile(r'/financials/.*')})
+            self.balance_sheet_url = financial_links[1]['href']
+            self.profit_loss_url = financial_links[2]['href']
+            self.cash_flow_url = financial_links[7]['href']
+            self.ratios_url = financial_links[8]['href']
         else:
             logging.error("Cannot process fundamentals as URL is not set")
 
@@ -162,12 +173,15 @@ class FundamentalsExtractor:
         return self.url != ""
 
     def extract_fundamentals(self):
-        self.__prepare_soup()
+        self.prepare_soup()
+        self.extract_balance_sheet()
+        self.extract_profit_and_loss_statement()
+        self.extract_cash_flow_statement()
         self.extract_ratios()
 
     def extract_balance_sheet(self):
-        self.__prepare_soup()
-        table = self.my_soup.find_all('table', {'class': 'table4'})[2]
+        my_soup = soup(urllib.urlopen(self.balance_sheet_url), "html.parser")
+        table = my_soup.find_all('table', {'class': 'table4'})[2]
         for index, tr in enumerate(table.find_all('tr')):
             td = tr.find_all('td')
             if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
@@ -186,8 +200,8 @@ class FundamentalsExtractor:
                                                         '2013': td[5].get_text().replace(',', '')}
 
     def extract_profit_and_loss_statement(self):
-        self.__prepare_soup()
-        table = self.my_soup.find_all('table', {'class': 'table4'})[2]
+        my_soup = soup(urllib.urlopen(self.profit_loss_url), "html.parser")
+        table = my_soup.find_all('table', {'class': 'table4'})[2]
         for index, tr in enumerate(table.find_all('tr')):
             td = tr.find_all('td')
             if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
@@ -206,8 +220,8 @@ class FundamentalsExtractor:
                                                                 '2013': td[5].get_text().replace(',', '')}
 
     def extract_cash_flow_statement(self):
-        self.__prepare_soup()
-        table = self.my_soup.find_all('table', {'class': 'table4'})[2]
+        my_soup = soup(urllib.urlopen(self.cash_flow_url), "html.parser")
+        table = my_soup.find_all('table', {'class': 'table4'})[2]
         for index, tr in enumerate(table.find_all('tr')):
             td = tr.find_all('td')
             if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
@@ -226,9 +240,10 @@ class FundamentalsExtractor:
                                                               '2013': td[5].get_text().replace(',', '')}
 
     def extract_ratios(self):
-        self.symbol_name = self.my_soup.find('h1', {'class': 'b_42 PT20'}).get_text()
+        my_soup = soup(urllib.urlopen(self.ratios_url), "html.parser")
+        self.symbol_name = my_soup.find('h1', {'class': 'b_42 PT20'}).get_text()
         logging.info("  Extracting Symbol ( %s ) ...", self.symbol_name)
-        table = self.my_soup.find_all('table', {'class': 'table4'})[2]
+        table = my_soup.find_all('table', {'class': 'table4'})[2]
         for index, tr in enumerate(table.find_all('tr')):
             td = tr.find_all('td')
             if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \

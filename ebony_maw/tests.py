@@ -11,9 +11,10 @@ class MawViewTests(TestCase):
 
     def test_extract_ratios(self):
         funda = FundamentalsExtractor(silent=False)
-        funda.url = "file:///home/anup/Downloads/Nocil.html"
+        funda.url = "file:///home/anup/Downloads/main_page.html"
+        funda.prepare_soup()
         logging.info("Ratios extracted are ...")
-        funda.extract_fundamentals()
+        funda.extract_ratios()
         self.assertEqual(7.42, float(funda.ratios['Basic EPS (Rs.)']['2017']),
                          "Ratios mismatch Expected : ( {} ), Actual : ( {} )".format(7.42, funda.ratios['Basic EPS (Rs.)']['2017']))
         self.assertEqual('NOCIL', funda.symbol_name,
@@ -21,7 +22,8 @@ class MawViewTests(TestCase):
 
     def test_push_to_database(self):
         funda = FundamentalsExtractor(silent=False)
-        funda.url = "file:///home/anup/Downloads/Nocil.html"
+        funda.url = "file:///home/anup/Downloads/main_page.html"
+        funda.prepare_soup()
         logging.info("Ratios extracted are ...")
         funda.extract_fundamentals()
         funda.push_to_database()
@@ -32,7 +34,8 @@ class MawViewTests(TestCase):
 
     def test_extract_balance_sheet(self):
         funda = FundamentalsExtractor(silent=False)
-        funda.url = "file:///home/anup/Downloads/balance_sheet.html"
+        funda.url = "file:///home/anup/Downloads/main_page.html"
+        funda.prepare_soup()
         logging.info("Balance sheet numbers extracted are ...")
         funda.extract_balance_sheet()
         self.assertEqual(163.58 	, float(funda.balance_sheet['Equity Share Capital']['2017']),
@@ -41,7 +44,8 @@ class MawViewTests(TestCase):
 
     def test_extract_profit_and_loss(self):
         funda = FundamentalsExtractor(silent=False)
-        funda.url = "file:///home/anup/Downloads/profit_loss.html"
+        funda.url = "file:///home/anup/Downloads/main_page.html"
+        funda.prepare_soup()
         logging.info("Profit and Loss Statement numbers extracted are ...")
         funda.extract_profit_and_loss_statement()
         self.assertEqual(751.33, float(funda.profit_loss_statement['Total Revenue']['2017']),
@@ -50,9 +54,19 @@ class MawViewTests(TestCase):
 
     def test_extract_cash_flow_statement(self):
         funda = FundamentalsExtractor(silent=False)
-        funda.url = "file:///home/anup/Downloads/cash_flow.html"
+        funda.url = "file:///home/anup/Downloads/main_page.html"
+        funda.prepare_soup()
         logging.info("Cash Flow Statement numbers extracted are ...")
         funda.extract_cash_flow_statement()
+        self.assertEqual(140.64, float(funda.cash_flow_statement['Net CashFlow From Operating Activities']['2017']),
+                         "Cash Flow statement mismatch, Expected : ( {} ), Actual : ( {} )".format(140.64,
+                          funda.cash_flow_statement['Net CashFlow From Operating Activities']['2017']))
+
+    def test_extract_fundamentals(self):
+        funda = FundamentalsExtractor(silent=False)
+        funda.url = "file:///home/anup/Downloads/main_page.html"
+        logging.info("Fundamentals extracting ...")
+        funda.extract_fundamentals()
         self.assertEqual(140.64, float(funda.cash_flow_statement['Net CashFlow From Operating Activities']['2017']),
                          "Cash Flow statement mismatch, Expected : ( {} ), Actual : ( {} )".format(140.64,
                           funda.cash_flow_statement['Net CashFlow From Operating Activities']['2017']))
