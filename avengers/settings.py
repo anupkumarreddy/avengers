@@ -135,4 +135,6 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
+    '/home/anup/Downloads/metronic_v5.2/metronic_v5.2/default/dist/default',
+
 ]

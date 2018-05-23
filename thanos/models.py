@@ -3,22 +3,32 @@ from __future__ import unicode_literals
 from django.db import models
 
 
-class Symbols (models.Model):
+class Sector (models.Model):
+    """All sectorial information is stored here"""
+
+    sector_name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.sector_name
+
+class Symbol (models.Model):
     """Model to store known symbols"""
 
     MARKETS = ( ('NSE', 'NSE MARKET'), ('BSE', 'BSE MARKET'),  ('NFO', 'NFO_MARKET'))
 
     symbol_name = models.CharField(max_length=50)
     market_name = models.CharField(max_length=50, choices=MARKETS)
+    symbol_sector_name = models.ForeignKey(Sector, on_delete=models.CASCADE, null=True, blank=True)
+    symbol_url = models.CharField(max_length=1000, null=True, blank=True)
 
     def __str__(self):
         return self.symbol_name
 
 
-class Fundamentals (models.Model):
+class Fundamental (models.Model):
     """Model to store all fundamental data for a symbol per year"""
 
-    symbol = models.ForeignKey(Symbols, on_delete=models.CASCADE)
+    symbol = models.ForeignKey(Symbol, on_delete=models.CASCADE)
     year = models.DateField(null=True, blank=True)
 
     # Per share ratios
@@ -70,7 +80,7 @@ class Fundamentals (models.Model):
 
 class BalanceSheet (models.Model):
 
-    symbol = models.ForeignKey(Symbols, on_delete=models.CASCADE)
+    symbol = models.ForeignKey(Symbol, on_delete=models.CASCADE)
     sheet_year = models.DateField(null=True, blank=True)
 
     equity_share_capital = models.FloatField(null=True, blank=True)
@@ -112,7 +122,7 @@ class BalanceSheet (models.Model):
 
 class ProfitAndLossStatement (models.Model):
 
-    symbol = models.ForeignKey(Symbols, on_delete=models.CASCADE)
+    symbol = models.ForeignKey(Symbol, on_delete=models.CASCADE)
     sheet_year = models.DateField(null=True, blank=True)
 
     revenue_from_operation_gross = models.FloatField(null=True, blank=True)
@@ -149,7 +159,7 @@ class ProfitAndLossStatement (models.Model):
 
 class CashFlowStatement (models.Model):
 
-    symbol = models.ForeignKey(Symbols, on_delete=models.CASCADE)
+    symbol = models.ForeignKey(Symbol, on_delete=models.CASCADE)
     sheet_year = models.DateField(null=True, blank=True)
 
     net_profit_loss_before_extraordinary_and_tax = models.FloatField(null=True, blank=True)

@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from thanos.models import Fundamentals, Symbols, ProfitAndLossStatement, CashFlowStatement, BalanceSheet
+from thanos.models import Fundamental, Symbol, ProfitAndLossStatement, CashFlowStatement, BalanceSheet
 from django.template import loader
 from django.views.generic import TemplateView
 from bs4 import BeautifulSoup as soup
@@ -10,7 +10,7 @@ import re
 
 
 class MawMainPage (TemplateView):
-    template_name = 'maw/maw.html'
+    template_name = 'maw/index.html'
 
     def post(self, request, *args, **kwargs):
         url = request.POST['url']
@@ -264,12 +264,12 @@ class FundamentalsExtractor:
     def push_to_database(self):
         years_list = ['2017', '2016', '2015', '2014', '2013']
         symbol_name = self.symbol_name
-        symbol = Symbols()
+        symbol = Symbol()
         symbol.symbol_name = symbol_name
-        symbol.market_name = Symbols.MARKETS[0][0]
+        symbol.market_name = Symbol.MARKETS[0][0]
         symbol.save()
         for i in range(5):
-            fundamentals = Fundamentals()
+            fundamentals = Fundamental()
             fundamentals.symbol = symbol
             fundamentals.year = datetime.strptime(years_list[i]+' 01 01', '%Y %m %d')
             for field, name in self.RATIOS_NAMES:

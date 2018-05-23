@@ -1,5 +1,5 @@
 from django.test import TestCase
-from thanos.models import Fundamentals, Symbols
+from thanos.models import Fundamental, Symbol
 from .views import FundamentalsExtractor
 import logging
 
@@ -27,10 +27,10 @@ class MawViewTests(TestCase):
         logging.info("Ratios extracted are ...")
         funda.extract_fundamentals()
         funda.push_to_database()
-        self.assertEqual(1, Symbols.objects.all().count(),
-                         "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(1, Symbols.objects.all().count()))
-        self.assertEqual(5, Fundamentals.objects.all().count(),
-                         "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(5, Fundamentals.objects.all().count()))
+        self.assertEqual(1, Symbol.objects.all().count(),
+                         "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(1, Symbol.objects.all().count()))
+        self.assertEqual(5, Fundamental.objects.all().count(),
+                         "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(5, Fundamental.objects.all().count()))
 
     def test_extract_balance_sheet(self):
         funda = FundamentalsExtractor(silent=False)
