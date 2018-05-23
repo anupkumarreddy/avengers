@@ -1,5 +1,5 @@
 from django.test import TestCase
-from thanos.models import Fundamental, Symbol
+from thanos.models import *
 from .views import FundamentalsExtractor
 import logging
 
@@ -17,8 +17,6 @@ class MawViewTests(TestCase):
         funda.extract_ratios()
         self.assertEqual(7.42, float(funda.ratios['Basic EPS (Rs.)']['2017']),
                          "Ratios mismatch Expected : ( {} ), Actual : ( {} )".format(7.42, funda.ratios['Basic EPS (Rs.)']['2017']))
-        self.assertEqual('NOCIL', funda.symbol_name,
-                         "Symbol name mismatch, Expected : ( {} ), Actual : ( {} )".format('NOCIL', funda.symbol_name))
 
     def test_push_to_database(self):
         funda = FundamentalsExtractor(silent=False)
@@ -29,8 +27,16 @@ class MawViewTests(TestCase):
         funda.push_to_database()
         self.assertEqual(1, Symbol.objects.all().count(),
                          "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(1, Symbol.objects.all().count()))
+        self.assertEqual(1, Sector.objects.all().count(),
+                         "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(1, Sector.objects.all().count()))
         self.assertEqual(5, Fundamental.objects.all().count(),
                          "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(5, Fundamental.objects.all().count()))
+        self.assertEqual(5, BalanceSheet.objects.all().count(),
+                         "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(5, BalanceSheet.objects.all().count()))
+        self.assertEqual(5, ProfitAndLossStatement.objects.all().count(),
+                         "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(5, ProfitAndLossStatement.objects.all().count()))
+        self.assertEqual(5, CashFlowStatement.objects.all().count(),
+                         "Database mismatch, Expected : ( {} ), Actual : ( {} )".format(5, CashFlowStatement.objects.all().count()))
 
     def test_extract_balance_sheet(self):
         funda = FundamentalsExtractor(silent=False)
@@ -71,3 +77,18 @@ class MawViewTests(TestCase):
                          "Cash Flow statement mismatch, Expected : ( {} ), Actual : ( {} )".format(140.64,
                           funda.cash_flow_statement['Net CashFlow From Operating Activities']['2017']))
 
+    def test_extract_sector(self):
+        funda = FundamentalsExtractor(silent=False)
+        funda.url = "file:///home/anup/Downloads/main_page.html"
+        logging.info("Extracting Sectorial information ...")
+        funda.extract_sector_information()
+        self.assertEqual("Petrochemicals", funda.sector, "Sector mismatch, Expected: ( {} ), Actual: ( {} )".
+                         format("Petrochemicals", funda.sector))
+
+    def test_extract_symbol(self):
+        funda = FundamentalsExtractor(silent=False)
+        funda.url = "file:///home/anup/Downloads/main_page.html"
+        logging.info("Extracting Symbol information ...")
+        funda.extract_symbol_information()
+        self.assertEqual("NOCIL", funda.symbol_name, "Symbol mismatch, Expected: ( {} ), Actual: ( {} )".
+                         format("NOCIL", funda.symbol_name))

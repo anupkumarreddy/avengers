@@ -1,5 +1,5 @@
 from django.test import TestCase
-from .models import Fundamental, Symbol, BalanceSheet, ProfitAndLossStatement, CashFlowStatement
+from .models import *
 import logging
 from datetime import datetime
 
@@ -65,6 +65,14 @@ class ThanosModelTests (TestCase):
         logging.info("The year field is set to ( %s )", cash_flow_sheet.year)
         cash_flow_sheet.save()
         self.assertEqual(1, CashFlowStatement.objects.all().count())
+
+    def test_sector_model(self):
+        sector = Sector()
+        sector.sector_name = "PETRO"
+        sector.save()
+        self.assertEqual(1, Sector.objects.all().count(), "Sector model mismatch, Expected: ( {} ) , Actual: ( {} ) "
+                         .format(1, Sector.objects.all().count()))
+
 
 
 

@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from thanos.models import Fundamental, Symbol, ProfitAndLossStatement, CashFlowStatement, BalanceSheet
+from thanos.models import *
 from django.template import loader
 from django.views.generic import TemplateView
 from bs4 import BeautifulSoup as soup
@@ -137,8 +137,8 @@ class FundamentalsExtractor:
     balance_sheet = {}
     profit_loss_statement = {}
     cash_flow_statement = {}
-    log_stream = ""
     symbol_name = ""
+    sector = ""
     base_url = "www.moneycontrol.com"
     balance_sheet_url = ""
     profit_loss_url = ""
@@ -174,6 +174,8 @@ class FundamentalsExtractor:
 
     def extract_fundamentals(self):
         self.prepare_soup()
+        self.extract_sector_information()
+        self.extract_symbol_information()
         self.extract_balance_sheet()
         self.extract_profit_and_loss_statement()
         self.extract_cash_flow_statement()
@@ -241,7 +243,6 @@ class FundamentalsExtractor:
 
     def extract_ratios(self):
         my_soup = soup(urllib.urlopen(self.ratios_url), "html.parser")
-        self.symbol_name = my_soup.find('h1', {'class': 'b_42 PT20'}).get_text()
         logging.info("  Extracting Symbol ( %s ) ...", self.symbol_name)
         table = my_soup.find_all('table', {'class': 'table4'})[2]
         for index, tr in enumerate(table.find_all('tr')):
@@ -263,10 +264,14 @@ class FundamentalsExtractor:
 
     def push_to_database(self):
         years_list = ['2017', '2016', '2015', '2014', '2013']
-        symbol_name = self.symbol_name
+        sector = Sector()
+        sector.sector_name = self.sector
+        sector.save()
         symbol = Symbol()
-        symbol.symbol_name = symbol_name
+        symbol.symbol_name = self.symbol_name
         symbol.market_name = Symbol.MARKETS[0][0]
+        symbol.symbol_sector_name = sector
+        symbol.url = self.url
         symbol.save()
         for i in range(5):
             fundamentals = Fundamental()
@@ -297,3 +302,20 @@ class FundamentalsExtractor:
                 if name in self.ratios:
                     setattr(cash_flow_statement, field, self.ratios[name][years_list[i]])
             cash_flow_statement.save()
+
+    def extract_sector_information(self):
+        my_soup = soup(urllib.urlopen(self.url), "html.parser")
+        self.sector = my_soup.find('a', {'href': re.compile(r'.*/stocks/sectors/.*')}).get_text()
+        logging.info("   Extracting Sector name ( %s )", self.sector)
+
+    def extract_symbol_information(self):
+        my_soup = soup(urllib.urlopen(self.url), "html.parser")
+        div = my_soup.find('div', {'class': 'FL gry10'})
+        match = re.match('.* NSE: (\w+) |.*', div.get_text())
+        if match:
+            logging.info(match.group(1))
+            self.symbol_name = match.group(1)
+            logging.info("   Extracting Symbol name ( %s )", self.symbol_name)
+        else:
+            logging.error("   Symbol not Found ...")
+
