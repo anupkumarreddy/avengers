@@ -10,13 +10,12 @@ import re
 
 
 class MawMainPage (TemplateView):
-    template_name = 'maw/index.html'
+    template_name = 'maw/dashboard.html'
 
     def post(self, request, *args, **kwargs):
         url = request.POST['url']
         fundamentals = FundamentalsExtractor(url, silent=False)
         fundamentals.extract_fundamentals()
-        fundamentals.push_to_database()
         data = "Extraction done..."
         maw = loader.get_template(self.template_name)
         return HttpResponse(maw.render({'url': data}, request))
@@ -139,13 +138,16 @@ class FundamentalsExtractor:
     cash_flow_statement = {}
     symbol_name = ""
     sector = ""
-    base_url = "www.moneycontrol.com"
     balance_sheet_url = ""
     profit_loss_url = ""
     cash_flow_url = ""
     ratios_url = ""
+    years_list = ['2017', '2016', '2015', '2014', '2013']
+    extraction_status = {'URL': False, 'SUB_URLS': False, 'SYMBOL': False, 'SECTOR': False, 'BALANCE_SHEET': False,
+                         'PROFIT_LOSS_STATEMENT': False, 'CASH_FLOW_STATEMENT': False, 'RATIOS': False}
 
     def __init__(self, url="", silent=True):
+        """constructor for extractor, assumes url must be present"""
         logging.basicConfig(level=logging.INFO)
         logger = logging.getLogger()
         logger.disabled = silent
@@ -153,169 +155,228 @@ class FundamentalsExtractor:
             logging.warning("URL is not set properly")
         else:
             self.url = url
+            self.extraction_status['URL'] = True
             logging.info("URL is set as %s ", url)
 
-    def __valiidate_url(self):
-        pass
+    def __extraction_is_clean(self):
+        status = True
+        for item in self.extraction_status.values():
+            if not item:
+                status = False
+        return status
+
+    def __already_done(self, flow):
+        return self.extraction_status[flow]
+
+    def __symbol_is_new(self):
+        status = True
+        symbol = Symbol.objects.filter(symbol_name__exact=self.symbol_name)
+        if symbol:
+            status = False
+        return status
+
+    def __save_sector(self):
+        sector = Sector.objects.filter(sector_name__exact=self.sector)
+        if not sector:
+            sector = Sector()
+            sector.sector_name = self.sector
+            sector.save()
+
+    def __save_symbol(self):
+        symbol = Symbol()
+        symbol.symbol_name = self.symbol_name
+        symbol.market_name = Symbol.MARKETS[0][0]
+        symbol.symbol_sector_name = Sector.objects.get(sector_name__exact=self.sector)
+        symbol.url = self.url
+        symbol.save()
+
+    def __save_balance_sheet(self):
+        for i in range(len(self.years_list)):
+            balance_sheet = BalanceSheet()
+            balance_sheet.symbol = Symbol.objects.get(symbol_name__exact=self.symbol_name)
+            balance_sheet.sheet_year = datetime.strptime(self.years_list[i] + ' 01 01', '%Y %m %d')
+            for field, name in self.BALANCE_SHEET_NAMES:
+                if name in self.balance_sheet:
+                    setattr(balance_sheet, field, self.balance_sheet[name][self.years_list[i]])
+            balance_sheet.save()
+
+    def __save_profit_loss_statement(self):
+        for i in range(len(self.years_list)):
+            profit_loss_statement = ProfitAndLossStatement()
+            profit_loss_statement.symbol = Symbol.objects.get(symbol_name__exact=self.symbol_name)
+            profit_loss_statement.sheet_year = datetime.strptime(self.years_list[i] + ' 01 01', '%Y %m %d')
+            for field, name in self.PROFIT_AND_LOSS_STATEMENT_NAMES:
+                if name in self.profit_loss_statement:
+                    setattr(profit_loss_statement, field, self.profit_loss_statement[name][self.years_list[i]])
+            profit_loss_statement.save()
+
+    def __save_cash_flow_statement(self):
+        for i in range(len(self.years_list)):
+            cash_flow_statement = CashFlowStatement()
+            cash_flow_statement.symbol = Symbol.objects.get(symbol_name__exact=self.symbol_name)
+            cash_flow_statement.sheet_year = datetime.strptime(self.years_list[i] + ' 01 01', '%Y %m %d')
+            for field, name in self.CASH_FLOW_STATEMENT_NAMES:
+                if name in self.cash_flow_statement:
+                    setattr(cash_flow_statement, field, self.cash_flow_statement[name][self.years_list[i]])
+            cash_flow_statement.save()
+
+    def __save_ratios(self):
+        for i in range(len(self.years_list)):
+            fundamentals = Fundamental()
+            fundamentals.symbol = Symbol.objects.get(symbol_name__exact=self.symbol_name)
+            fundamentals.year = datetime.strptime(self.years_list[i] + ' 01 01', '%Y %m %d')
+            for field, name in self.RATIOS_NAMES:
+                if name in self.ratios:
+                    setattr(fundamentals, field, self.ratios[name][self.years_list[i]])
+            fundamentals.save()
 
     def prepare_soup(self):
-        if self.__is_url_present():
+        """Extracts all financial links from the main page"""
+        if self.__already_done('URL'):
             my_soup = soup(urllib.urlopen(self.url), "html.parser")
             financial_links = my_soup.find_all('a', {'href': re.compile(r'/financials/.*')})
             self.balance_sheet_url = financial_links[1]['href']
             self.profit_loss_url = financial_links[2]['href']
             self.cash_flow_url = financial_links[7]['href']
             self.ratios_url = financial_links[8]['href']
-        else:
-            logging.error("Cannot process fundamentals as URL is not set")
+            if self.balance_sheet_url and self.profit_loss_url and self.cash_flow_url and self.ratios_url:
+                self.extraction_status['SUB_URLS'] = True
 
-    def __is_url_present(self):
-        return self.url != ""
+    def extract_sector_information(self):
+        """Extracts sector related information"""
+        if self.__already_done('URL'):
+            my_soup = soup(urllib.urlopen(self.url), "html.parser")
+            self.sector = my_soup.find('a', {'href': re.compile(r'.*/stocks/sectors/.*')}).get_text()
+            if self.sector:
+                logging.info("   Extracting Sector name ( %s )", self.sector)
+                self.extraction_status['SECTOR'] = True
 
-    def extract_fundamentals(self):
-        self.prepare_soup()
-        self.extract_sector_information()
-        self.extract_symbol_information()
-        self.extract_balance_sheet()
-        self.extract_profit_and_loss_statement()
-        self.extract_cash_flow_statement()
-        self.extract_ratios()
+    def extract_symbol_information(self):
+        """Extracts symbol related information"""
+        if self.__already_done('URL') and self.__already_done('SECTOR'):
+            my_soup = soup(urllib.urlopen(self.url), "html.parser")
+            div = my_soup.find('div', {'class': 'FL gry10'})
+            if div:
+                match = re.match('.* NSE: (\w+) |.*', div.get_text())
+                if match:
+                    logging.info(match.group(1))
+                    self.symbol_name = match.group(1)
+                    logging.info("   Extracting Symbol name ( %s )", self.symbol_name)
+                    self.extraction_status['SYMBOL'] = True
+                else:
+                    logging.error("   Symbol not Found ...")
 
     def extract_balance_sheet(self):
-        my_soup = soup(urllib.urlopen(self.balance_sheet_url), "html.parser")
-        table = my_soup.find_all('table', {'class': 'table4'})[2]
-        for index, tr in enumerate(table.find_all('tr')):
-            td = tr.find_all('td')
-            if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
-                    and td[2].get_text() != "" and td[3].get_text() != "" \
-                    and td[4].get_text() != "" and td[5].get_text() != "":
-                logging.info("  Extracting %s: (%s, %s, %s, %s, %s) ... ", td[0].get_text(),
-                             td[1].get_text(),
-                             td[2].get_text(),
-                             td[3].get_text(),
-                             td[4].get_text(),
-                             td[5].get_text())
-                self.balance_sheet[td[0].get_text()] = {'2017': td[1].get_text().replace(',', ''),
-                                                        '2016': td[2].get_text().replace(',', ''),
-                                                        '2015': td[3].get_text().replace(',', ''),
-                                                        '2014': td[4].get_text().replace(',', ''),
-                                                        '2013': td[5].get_text().replace(',', '')}
-
-    def extract_profit_and_loss_statement(self):
-        my_soup = soup(urllib.urlopen(self.profit_loss_url), "html.parser")
-        table = my_soup.find_all('table', {'class': 'table4'})[2]
-        for index, tr in enumerate(table.find_all('tr')):
-            td = tr.find_all('td')
-            if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
-                    and td[2].get_text() != "" and td[3].get_text() != "" \
-                    and td[4].get_text() != "" and td[5].get_text() != "":
-                logging.info("  Extracting %s: (%s, %s, %s, %s, %s) ... ", td[0].get_text(),
-                             td[1].get_text(),
-                             td[2].get_text(),
-                             td[3].get_text(),
-                             td[4].get_text(),
-                             td[5].get_text())
-                self.profit_loss_statement[td[0].get_text()] = {'2017': td[1].get_text().replace(',', ''),
+        """Extracts balance sheet from financial url"""
+        if self.__already_done('SUB_URLS') and self.__already_done('SYMBOL'):
+            my_soup = soup(urllib.urlopen(self.balance_sheet_url), "html.parser")
+            table = my_soup.find_all('table', {'class': 'table4'})[2]
+            if table:
+                for index, tr in enumerate(table.find_all('tr')):
+                    td = tr.find_all('td')
+                    if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
+                            and td[2].get_text() != "" and td[3].get_text() != "" \
+                            and td[4].get_text() != "" and td[5].get_text() != "":
+                        logging.info("  Extracting %s: (%s, %s, %s, %s, %s) ... ", td[0].get_text(),
+                                     td[1].get_text(),
+                                     td[2].get_text(),
+                                     td[3].get_text(),
+                                     td[4].get_text(),
+                                     td[5].get_text())
+                        self.balance_sheet[td[0].get_text()] = {'2017': td[1].get_text().replace(',', ''),
                                                                 '2016': td[2].get_text().replace(',', ''),
                                                                 '2015': td[3].get_text().replace(',', ''),
                                                                 '2014': td[4].get_text().replace(',', ''),
                                                                 '2013': td[5].get_text().replace(',', '')}
+                self.extraction_status['BALANCE_SHEET'] = True
+
+    def extract_profit_and_loss_statement(self):
+        """Extracts profit and loss statement from finacial url"""
+        if self.__already_done('SUB_URLS') and self.__already_done('SYMBOL'):
+            my_soup = soup(urllib.urlopen(self.profit_loss_url), "html.parser")
+            table = my_soup.find_all('table', {'class': 'table4'})[2]
+            if table:
+                for index, tr in enumerate(table.find_all('tr')):
+                    td = tr.find_all('td')
+                    if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
+                            and td[2].get_text() != "" and td[3].get_text() != "" \
+                            and td[4].get_text() != "" and td[5].get_text() != "":
+                        logging.info("  Extracting %s: (%s, %s, %s, %s, %s) ... ", td[0].get_text(),
+                                     td[1].get_text(),
+                                     td[2].get_text(),
+                                     td[3].get_text(),
+                                     td[4].get_text(),
+                                     td[5].get_text())
+                        self.profit_loss_statement[td[0].get_text()] = {'2017': td[1].get_text().replace(',', ''),
+                                                                        '2016': td[2].get_text().replace(',', ''),
+                                                                        '2015': td[3].get_text().replace(',', ''),
+                                                                        '2014': td[4].get_text().replace(',', ''),
+                                                                        '2013': td[5].get_text().replace(',', '')}
+                self.extraction_status['PROFIT_LOSS_STATEMENT'] = True
 
     def extract_cash_flow_statement(self):
-        my_soup = soup(urllib.urlopen(self.cash_flow_url), "html.parser")
-        table = my_soup.find_all('table', {'class': 'table4'})[2]
-        for index, tr in enumerate(table.find_all('tr')):
-            td = tr.find_all('td')
-            if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
-                    and td[2].get_text() != "" and td[3].get_text() != "" \
-                    and td[4].get_text() != "" and td[5].get_text() != "":
-                logging.info("  Extracting %s: (%s, %s, %s, %s, %s) ... ", td[0].get_text(),
-                             td[1].get_text(),
-                             td[2].get_text(),
-                             td[3].get_text(),
-                             td[4].get_text(),
-                             td[5].get_text())
-                self.cash_flow_statement[td[0].get_text()] = {'2017': td[1].get_text().replace(',', ''),
-                                                              '2016': td[2].get_text().replace(',', ''),
-                                                              '2015': td[3].get_text().replace(',', ''),
-                                                              '2014': td[4].get_text().replace(',', ''),
-                                                              '2013': td[5].get_text().replace(',', '')}
+        """Extracts cash flow statement from financial url"""
+        if self.__already_done('SUB_URLS') and self.__already_done('SYMBOL'):
+            my_soup = soup(urllib.urlopen(self.cash_flow_url), "html.parser")
+            table = my_soup.find_all('table', {'class': 'table4'})[2]
+            if table:
+                for index, tr in enumerate(table.find_all('tr')):
+                    td = tr.find_all('td')
+                    if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
+                            and td[2].get_text() != "" and td[3].get_text() != "" \
+                            and td[4].get_text() != "" and td[5].get_text() != "":
+                        logging.info("  Extracting %s: (%s, %s, %s, %s, %s) ... ", td[0].get_text(),
+                                     td[1].get_text(),
+                                     td[2].get_text(),
+                                     td[3].get_text(),
+                                     td[4].get_text(),
+                                     td[5].get_text())
+                        self.cash_flow_statement[td[0].get_text()] = {'2017': td[1].get_text().replace(',', ''),
+                                                                      '2016': td[2].get_text().replace(',', ''),
+                                                                      '2015': td[3].get_text().replace(',', ''),
+                                                                      '2014': td[4].get_text().replace(',', ''),
+                                                                      '2013': td[5].get_text().replace(',', '')}
+                self.extraction_status['CASH_FLOW_STATEMENT'] = True
 
     def extract_ratios(self):
-        my_soup = soup(urllib.urlopen(self.ratios_url), "html.parser")
-        logging.info("  Extracting Symbol ( %s ) ...", self.symbol_name)
-        table = my_soup.find_all('table', {'class': 'table4'})[2]
-        for index, tr in enumerate(table.find_all('tr')):
-            td = tr.find_all('td')
-            if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
-                    and td[2].get_text() != "" and td[3].get_text() != "" \
-                    and td[4].get_text() != "" and td[5].get_text() != "":
-                logging.info("  Extracting %s: (%s, %s, %s, %s, %s) ... ", td[0].get_text(),
-                             td[1].get_text(),
-                             td[2].get_text(),
-                             td[3].get_text(),
-                             td[4].get_text(),
-                             td[5].get_text())
-                self.ratios[td[0].get_text()] = {'2017': td[1].get_text().replace(',', ''),
-                                                 '2016': td[2].get_text().replace(',', ''),
-                                                 '2015': td[3].get_text().replace(',', ''),
-                                                 '2014': td[4].get_text().replace(',', ''),
-                                                 '2013': td[5].get_text().replace(',', '')}
+        """Extracts ratios information from financial url"""
+        if self.__already_done('SUB_URLS') and self.__already_done('SYMBOL'):
+            my_soup = soup(urllib.urlopen(self.ratios_url), "html.parser")
+            logging.info("  Extracting Symbol ( %s ) ...", self.symbol_name)
+            table = my_soup.find_all('table', {'class': 'table4'})[2]
+            if table:
+                for index, tr in enumerate(table.find_all('tr')):
+                    td = tr.find_all('td')
+                    if len(td) == 6 and td[0].get_text() != "" and td[1].get_text() != "" \
+                            and td[2].get_text() != "" and td[3].get_text() != "" \
+                            and td[4].get_text() != "" and td[5].get_text() != "":
+                        logging.info("  Extracting %s: (%s, %s, %s, %s, %s) ... ", td[0].get_text(),
+                                     td[1].get_text(),
+                                     td[2].get_text(),
+                                     td[3].get_text(),
+                                     td[4].get_text(),
+                                     td[5].get_text())
+                        self.ratios[td[0].get_text()] = {'2017': td[1].get_text().replace(',', ''),
+                                                         '2016': td[2].get_text().replace(',', ''),
+                                                         '2015': td[3].get_text().replace(',', ''),
+                                                         '2014': td[4].get_text().replace(',', ''),
+                                                         '2013': td[5].get_text().replace(',', '')}
+                self.extraction_status['RATIOS'] = True
 
     def push_to_database(self):
-        years_list = ['2017', '2016', '2015', '2014', '2013']
-        sector = Sector()
-        sector.sector_name = self.sector
-        sector.save()
-        symbol = Symbol()
-        symbol.symbol_name = self.symbol_name
-        symbol.market_name = Symbol.MARKETS[0][0]
-        symbol.symbol_sector_name = sector
-        symbol.url = self.url
-        symbol.save()
-        for i in range(5):
-            fundamentals = Fundamental()
-            fundamentals.symbol = symbol
-            fundamentals.year = datetime.strptime(years_list[i]+' 01 01', '%Y %m %d')
-            for field, name in self.RATIOS_NAMES:
-                if name in self.ratios:
-                    setattr(fundamentals, field, self.ratios[name][years_list[i]])
-            fundamentals.save()
-            balance_sheet = BalanceSheet()
-            balance_sheet.symbol = symbol
-            balance_sheet.sheet_year = datetime.strptime(years_list[i]+' 01 01', '%Y %m %d')
-            for field, name in self.BALANCE_SHEET_NAMES:
-                if name in self.ratios:
-                    setattr(balance_sheet, field, self.ratios[name][years_list[i]])
-            balance_sheet.save()
-            profit_loss_statement = ProfitAndLossStatement()
-            profit_loss_statement.symbol = symbol
-            profit_loss_statement.sheet_year = datetime.strptime(years_list[i] + ' 01 01', '%Y %m %d')
-            for field, name in self.PROFIT_AND_LOSS_STATEMENT_NAMES:
-                if name in self.ratios:
-                    setattr(profit_loss_statement, field, self.ratios[name][years_list[i]])
-            profit_loss_statement.save()
-            cash_flow_statement = CashFlowStatement()
-            cash_flow_statement.symbol = symbol
-            cash_flow_statement.sheet_year = datetime.strptime(years_list[i] + ' 01 01', '%Y %m %d')
-            for field, name in self.CASH_FLOW_STATEMENT_NAMES:
-                if name in self.ratios:
-                    setattr(cash_flow_statement, field, self.ratios[name][years_list[i]])
-            cash_flow_statement.save()
+        """Store all information to the database"""
+        if self.__extraction_is_clean() and self.__symbol_is_new():
+            self.__save_sector()
+            self.__save_symbol()
+            self.__save_balance_sheet()
+            self.__save_profit_loss_statement()
+            self.__save_cash_flow_statement()
+            self.__save_ratios()
 
-    def extract_sector_information(self):
-        my_soup = soup(urllib.urlopen(self.url), "html.parser")
-        self.sector = my_soup.find('a', {'href': re.compile(r'.*/stocks/sectors/.*')}).get_text()
-        logging.info("   Extracting Sector name ( %s )", self.sector)
+    def extract_fundamentals(self):
+        for phase in self.phases:
+            phase(self)
 
-    def extract_symbol_information(self):
-        my_soup = soup(urllib.urlopen(self.url), "html.parser")
-        div = my_soup.find('div', {'class': 'FL gry10'})
-        match = re.match('.* NSE: (\w+) |.*', div.get_text())
-        if match:
-            logging.info(match.group(1))
-            self.symbol_name = match.group(1)
-            logging.info("   Extracting Symbol name ( %s )", self.symbol_name)
-        else:
-            logging.error("   Symbol not Found ...")
+    phases = [prepare_soup, extract_sector_information, extract_symbol_information, extract_balance_sheet,
+              extract_profit_and_loss_statement, extract_cash_flow_statement, extract_ratios, push_to_database]
 
