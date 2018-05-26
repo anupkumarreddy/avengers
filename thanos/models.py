@@ -11,6 +11,7 @@ class Sector (models.Model):
     def __str__(self):
         return self.sector_name
 
+
 class Symbol (models.Model):
     """Model to store known symbols"""
 

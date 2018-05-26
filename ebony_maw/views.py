@@ -12,13 +12,40 @@ import re
 class MawMainPage (TemplateView):
     template_name = 'maw/dashboard.html'
 
-    def post(self, request, *args, **kwargs):
-        url = request.POST['url']
-        fundamentals = FundamentalsExtractor(url, silent=False)
-        fundamentals.extract_fundamentals()
-        data = "Extraction done..."
+    def get(self, request, symbol_id=0):
+        data = {}
+        all_symbols = Symbol.objects.all()
+        requested_symbol = Symbol.objects.filter(pk=symbol_id)
+        if len(requested_symbol):
+            requested_symbol = Symbol.objects.get(pk=symbol_id)
+        else:
+            requested_symbol = all_symbols[0]
+        balance_sheet = BalanceSheet.objects.get(symbol_id=requested_symbol, sheet_year__year=2017)
+        data['requested_symbol'] = requested_symbol
+        company = {'liabilities': int(((balance_sheet.total_non_current_liabilities + balance_sheet.total_current_libilities)/balance_sheet.total_assets)*100),
+                   'assets': balance_sheet.total_assets, 'equity': int((balance_sheet.total_share_holders_fund/balance_sheet.total_assets)*100)}
+        data['company'] = company
+        data['all_symbols'] = all_symbols
         maw = loader.get_template(self.template_name)
-        return HttpResponse(maw.render({'url': data}, request))
+        return HttpResponse(maw.render({'data': data}, request))
+
+    def post(self, request, symbol_id=0):
+        data = {}
+        url = request.POST['url']
+        print(url)
+        fundamentals = FundamentalsExtractor(url, silent=False)
+        new_symbol_id = fundamentals.extract_fundamentals()
+        all_symbols = Symbol.objects.all()
+        requested_symbol = Symbol.objects.filter(pk=new_symbol_id)
+        if len(requested_symbol):
+            requested_symbol = Symbol.objects.get(pk=new_symbol_id)
+        else:
+            requested_symbol = all_symbols[0]
+        data['requested_symbol'] = requested_symbol
+        data['all_symbols'] = all_symbols
+        data['message'] = "Extraction done..."
+        maw = loader.get_template(self.template_name)
+        return HttpResponse(maw.render({'data': data}, request))
 
 
 class FundamentalsExtractor:
@@ -132,12 +159,14 @@ class FundamentalsExtractor:
     )
 
     url = ""
+    symbol_id = -1
     ratios = {}
     balance_sheet = {}
     profit_loss_statement = {}
     cash_flow_statement = {}
     symbol_name = ""
     sector = ""
+    base_url = "http://www.moneycontrol.com"
     balance_sheet_url = ""
     profit_loss_url = ""
     cash_flow_url = ""
@@ -187,8 +216,9 @@ class FundamentalsExtractor:
         symbol.symbol_name = self.symbol_name
         symbol.market_name = Symbol.MARKETS[0][0]
         symbol.symbol_sector_name = Sector.objects.get(sector_name__exact=self.sector)
-        symbol.url = self.url
+        symbol.symbol_url = self.url
         symbol.save()
+        self.symbol_id = symbol.id
 
     def __save_balance_sheet(self):
         for i in range(len(self.years_list)):
@@ -235,10 +265,11 @@ class FundamentalsExtractor:
         if self.__already_done('URL'):
             my_soup = soup(urllib.urlopen(self.url), "html.parser")
             financial_links = my_soup.find_all('a', {'href': re.compile(r'/financials/.*')})
-            self.balance_sheet_url = financial_links[1]['href']
-            self.profit_loss_url = financial_links[2]['href']
-            self.cash_flow_url = financial_links[7]['href']
-            self.ratios_url = financial_links[8]['href']
+            self.balance_sheet_url = self.base_url + financial_links[1]['href']
+            self.profit_loss_url = self.base_url + financial_links[2]['href']
+            self.cash_flow_url = self.base_url + financial_links[7]['href']
+            self.ratios_url = self.base_url + financial_links[8]['href']
+            logging.info("  Link:%s", self.balance_sheet_url)
             if self.balance_sheet_url and self.profit_loss_url and self.cash_flow_url and self.ratios_url:
                 self.extraction_status['SUB_URLS'] = True
 
@@ -376,6 +407,7 @@ class FundamentalsExtractor:
     def extract_fundamentals(self):
         for phase in self.phases:
             phase(self)
+        return self.symbol_id
 
     phases = [prepare_soup, extract_sector_information, extract_symbol_information, extract_balance_sheet,
               extract_profit_and_loss_statement, extract_cash_flow_statement, extract_ratios, push_to_database]

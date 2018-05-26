@@ -7,7 +7,7 @@
             <div class="d-flex align-items-center">
                 <div class="mr-auto">
                     <h3 class="m-subheader__title ">
-                        Dashboard
+                        Dashboard : {{ data.requested_symbol.symbol_name }}
                     </h3>
                 </div>
             </div>
@@ -33,12 +33,14 @@
                                     </div>
                                 </div>
                                 <!--begin::Form-->
-                                <form method="post" action="{% url 'dashboard' %}" class="m-form m-form--fit m-form--label-align-right">
+                                <form method="post" action="{% url 'dashboard' 0 %}"
+                                      class="m-form m-form--fit m-form--label-align-right">
+                                    {% csrf_token %}
                                     <div class="m-portlet__body ">
                                         <div class="form-group m-form__group">
                                             <input type="text" class="form-control m-input m-input--air"
-                                                   id="exampleInputEmail1" aria-describedby="emailHelp"
-                                                   placeholder="Enter email">
+                                                   name="url" id="exampleInputEmail1" aria-describedby="emailHelp"
+                                                   placeholder="{{ data.message }}">
                                         </div>
                                     </div>
                                     <div class="m-portlet__foot m-portlet__foot--fit">
@@ -93,7 +95,7 @@
                                                         <div id="m_chart_profit_share" class="m-widget14__chart"
                                                              style="height: 160px">
                                                             <div class="m-widget14__stat">
-                                                                45
+                                                                100
                                                             </div>
                                                         </div>
                                                     </div>
@@ -102,19 +104,13 @@
                                                             <div class="m-widget14__legend">
                                                                 <span class="m-widget14__legend-bullet m--bg-accent"></span>
                                                                 <span class="m-widget14__legend-text">
-																37% Sport Tickets
+																{{ data.company.liabilities }}% Liabilties
 															</span>
                                                             </div>
                                                             <div class="m-widget14__legend">
                                                                 <span class="m-widget14__legend-bullet m--bg-warning"></span>
                                                                 <span class="m-widget14__legend-text">
-																47% Business Events
-															</span>
-                                                            </div>
-                                                            <div class="m-widget14__legend">
-                                                                <span class="m-widget14__legend-bullet m--bg-brand"></span>
-                                                                <span class="m-widget14__legend-text">
-																19% Others
+																{{ data.company.equity }}% Equity
 															</span>
                                                             </div>
                                                         </div>
@@ -193,26 +189,13 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr>
-                                    <td>
-                                        NOCIL
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        CIL
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        NCIL
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        NOC
-                                    </td>
-                                </tr>
+                                {% for item in data.all_symbols %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'dashboard' item.id %}">{{ item.symbol_name }}</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
                                 </tbody>
                             </table>
                             <!--end: Datatable -->
