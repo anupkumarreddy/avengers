@@ -13,6 +13,15 @@ class MawMainPage (TemplateView):
     template_name = 'maw/dashboard.html'
 
     def get(self, request, symbol_id=0):
+        return self.serve(request, symbol_id)
+
+    def post(self, request, symbol_id=0):
+        url = request.POST['url']
+        fundamentals = FundamentalsExtractor(url, silent=False)
+        new_symbol_id = fundamentals.extract_fundamentals()
+        return self.serve(request, new_symbol_id)
+
+    def serve(self, request, symbol_id = 0):
         data = {}
         all_symbols = Symbol.objects.all()
         requested_symbol = Symbol.objects.filter(pk=symbol_id)
@@ -22,28 +31,28 @@ class MawMainPage (TemplateView):
             requested_symbol = all_symbols[0]
         balance_sheet = BalanceSheet.objects.get(symbol_id=requested_symbol, sheet_year__year=2017)
         data['requested_symbol'] = requested_symbol
-        company = {'liabilities': int(((balance_sheet.total_non_current_liabilities + balance_sheet.total_current_libilities)/balance_sheet.total_assets)*100),
-                   'assets': balance_sheet.total_assets, 'equity': int((balance_sheet.total_share_holders_fund/balance_sheet.total_assets)*100)}
+        company = {'liabilities': int(((balance_sheet.total_non_current_liabilities + balance_sheet.total_current_libilities) / balance_sheet.total_assets) * 100),
+                   'assets': balance_sheet.total_assets,
+                   'equity': int((balance_sheet.total_share_holders_fund / balance_sheet.total_assets) * 100)}
+        profit_loss_statement = ProfitAndLossStatement.objects.get(symbol_id=requested_symbol, sheet_year__year=2017)
+        pl = {'revenue': profit_loss_statement.total_revenue, 'expences': profit_loss_statement.total_expenses,
+              'profit': profit_loss_statement.profit_loss_for_the_period,
+              'tax': (profit_loss_statement.total_revenue-(profit_loss_statement.total_expenses + profit_loss_statement.profit_loss_for_the_period))}
+        cash_flow_statement = CashFlowStatement.objects.get(symbol_id=requested_symbol, sheet_year__year=2017)
+        cf = {'operating_activities': cash_flow_statement.net_cash_flow_from_operating_activities,
+              'investing_activities': cash_flow_statement.net_cash_used_in_investing_activities,
+              'financing_activities': cash_flow_statement.net_cash_used_from_financing_activities,
+              'others': cash_flow_statement.net_inc_dec_cash_and_cash_equivalents -
+                        (cash_flow_statement.net_cash_flow_from_operating_activities+
+                         cash_flow_statement.net_cash_used_in_investing_activities+
+                         cash_flow_statement.net_cash_used_from_financing_activities)
+              }
+        balance_history = BalanceSheet.objects.filter(symbol_id=requested_symbol).order_by('sheet_year')
         data['company'] = company
         data['all_symbols'] = all_symbols
-        maw = loader.get_template(self.template_name)
-        return HttpResponse(maw.render({'data': data}, request))
-
-    def post(self, request, symbol_id=0):
-        data = {}
-        url = request.POST['url']
-        print(url)
-        fundamentals = FundamentalsExtractor(url, silent=False)
-        new_symbol_id = fundamentals.extract_fundamentals()
-        all_symbols = Symbol.objects.all()
-        requested_symbol = Symbol.objects.filter(pk=new_symbol_id)
-        if len(requested_symbol):
-            requested_symbol = Symbol.objects.get(pk=new_symbol_id)
-        else:
-            requested_symbol = all_symbols[0]
-        data['requested_symbol'] = requested_symbol
-        data['all_symbols'] = all_symbols
-        data['message'] = "Extraction done..."
+        data['pl'] = pl
+        data['cf'] = cf
+        data['balance_hist'] = balance_history
         maw = loader.get_template(self.template_name)
         return HttpResponse(maw.render({'data': data}, request))
 

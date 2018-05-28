@@ -17,7 +17,7 @@
             <div class="row">
                 <div class="col-xl-9">
                     <div class="row">
-                        <div class="col-xl-12">
+                        <div class="col-xl-7">
                             <!--begin::Portlet-->
                             <div class="m-portlet m-portlet--tab">
                                 <div class="m-portlet__head">
@@ -55,6 +55,45 @@
                                 <!--end::Form-->
                             </div>
                             <!--end::Portlet-->
+                        </div>
+                        <div class="col-xl-5">
+                            <div class="m-portlet m-portlet--mobile">
+                                <div class="m-portlet__body" id="chart_div">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xl-5">
+                            <div class="m-portlet m-portlet--mobile">
+                                <div class="m-portlet__body  m-portlet__body--no-padding">
+                                    <div class="m-portlet__body" id="pl_div">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-7">
+                            <div class="m-portlet m-portlet--mobile">
+                                <div class="m-portlet__body  m-portlet__body--no-padding">
+                                    <div class="m-portlet__body" id="cf_div">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-xl-4" >
+                            <div class="m-portlet m-portlet--mobile">
+                                <div class="m-portlet__body " id="curve_chart">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-4">
+
+                        </div>
+                        <div class="col-xl-4">
+
                         </div>
                     </div>
                     <div class="row">
@@ -210,4 +249,124 @@
 {% block script_content %}
     <script src="{% static "assets/demo/default/custom/crud/metronic-datatable/base/html-table.js" %}"
             type="text/javascript"></script>
+    <script type="text/javascript">
+
+        // Load the Visualization API and the corechart package.
+        google.charts.load('current', {'packages': ['corechart']});
+
+        // Set a callback to run when the Google Visualization API is loaded.
+        google.charts.setOnLoadCallback(drawBalanceSheet);
+        google.charts.setOnLoadCallback(drawProfitLossStatement)
+        google.charts.setOnLoadCallback(drawCashFlowStatement)
+        google.charts.setOnLoadCallback(drawBalanceHistory)
+
+        function drawBalanceSheet() {
+
+            // Create the data table.
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'finance');
+            data.addColumn('number', 'precentage');
+            data.addRows([
+                ['Equity', {{ data.company.equity }}],
+                ['Debt', {{ data.company.liabilities }}]
+            ]);
+
+            // Set chart options
+            var options = {
+                'title': 'Company financing',
+                'width': 400,
+                'height': 207,
+                is3D: true,
+                //pieHole: 0.6,
+
+            };
+
+            // Instantiate and draw our chart, passing in some options.
+            var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+            chart.draw(data, options);
+
+        }
+        function drawProfitLossStatement(){
+            // Create the data table.
+            var data_pl = new google.visualization.DataTable();
+            data_pl.addColumn('string', 'entry');
+            data_pl.addColumn('number', 'precentage');
+            data_pl.addRows([
+                ['Expences', {{ data.pl.expences }}],
+                ['Taxes', {{ data.pl.tax }}],
+                ['Profit', {{ data.pl.profit }}],
+            ]);
+
+            // Set chart options
+            var options_pl = {
+                'title': 'Income Statement',
+                'width': 400,
+                'height': 207,
+                is3D: true,
+                //pieHole: 0.6,
+
+            };
+
+            // Instantiate and draw our chart, passing in some options.
+            var chart_pl = new google.visualization.PieChart(document.getElementById('pl_div'));
+            chart_pl.draw(data_pl, options_pl);
+        }
+        function drawCashFlowStatement(){
+            // Create the data table.
+            var data_pl = new google.visualization.DataTable();
+            data_pl.addColumn('string', 'entry');
+            data_pl.addColumn('number', 'precentage');
+            data_pl.addRows([
+                ['Operations', {{ data.cf.operating_activities }}],
+                ['Investments', {{ data.cf.investing_activities }}],
+                ['Financing', {{ data.cf.financing_activities }}],
+                ['Others', {{ data.cf.others }}],
+            ]);
+            var data = google.visualization.arrayToDataTable([
+                ['Entry', 'cost', { role: 'style' } ],
+                ['Operations', {{ data.cf.operating_activities }}, 'color: green'],
+                ['Investments', {{ data.cf.investing_activities }}, 'color: red'],
+                ['Financing', {{ data.cf.financing_activities }}, 'color: red'],
+                ['Others', {{ data.cf.others }}, 'color: red']
+
+              ]);
+
+            // Set chart options
+            var options_pl = {
+                'title': 'Cash Flow',
+                'width': 600,
+                'height': 207,
+                legend: {position: 'none'},
+                is3D: true,
+
+            };
+
+            // Instantiate and draw our chart, passing in some options.
+            var chart_pl = new google.visualization.BarChart(document.getElementById('cf_div'));
+            chart_pl.draw(data, options_pl);
+        }
+        function drawBalanceHistory() {
+        var data = google.visualization.arrayToDataTable([
+          ['Year', 'Share Capital', 'Debt', 'Assets'],
+            {% for item in data.balance_hist %}
+                ['{{ item.sheet_year.year }}', {{ item.total_share_holders_fund }}, {{ item.total_non_current_liabilities }}, {{ item.total_non_current_assets }}],
+            {% endfor %}
+
+        ]);
+
+        var options = {
+          title: 'Company History',
+          'width': 330,
+          'height': 207,
+          curveType: 'function',
+          legend: { position: 'bottom' }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart.draw(data, options);
+      }
+
+    </script>
+
 {% endblock script_content %}
