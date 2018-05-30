@@ -19,5 +19,6 @@ from django.conf.urls import include
 
 urlpatterns = [
     url(r'^maw/', include('ebony_maw.urls')),
+    url(r'^juggernaut/', include('juggernaut.urls')),
     url(r'^admin/', admin.site.urls),
 ]
