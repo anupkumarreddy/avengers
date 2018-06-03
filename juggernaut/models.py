@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
-
 from django.db import models
+import datetime
 
 
 class StockAsset (models.Model):
@@ -30,6 +30,15 @@ class StockOrder (models.Model):
     order_rate = models.FloatField(blank=True, null=True)
     order_no = models.CharField(max_length=200)
     order_trade_no = models.CharField(max_length=200)
+
+    def prepare_stock_order_from_list(self, stock_order_list):
+        self.order_date = datetime.datetime.strptime(stock_order_list[0], '%d-%m-%Y').strftime('%Y-%m-%d')
+        self.order_name = stock_order_list[1]
+        self.order_type = stock_order_list[2]
+        self.order_quantity = stock_order_list[3]
+        self.order_rate = stock_order_list[4]
+        self.order_no = stock_order_list[5]
+        self.order_trade_no = stock_order_list[6]
 
     def __str__(self):
         return self.order_name

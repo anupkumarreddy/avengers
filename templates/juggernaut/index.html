@@ -15,7 +15,7 @@
         <div class="m-content">
             <!--Begin::Section-->
             <div class="row">
-                <div class="col-xl-12">
+                <div class="col-xl-8">
                     <!--begin::Portlet-->
                     <div class="m-portlet m-portlet--tab">
                         <div class="m-portlet__head">
@@ -54,7 +54,66 @@
                     </div>
                     <!--end::Portlet-->
                 </div>
+                <div class="col-md-12 col-lg-12 col-xl-4">
+                    <div class="m-portlet">
+                        <!--begin:: Widgets/Stats2-1 -->
+                        <div class="m-widget1">
+                            <div class="m-widget1__item">
+                                <div class="row m-row--no-padding align-items-center">
+                                    <div class="col">
+                                        <h3 class="m-widget1__title">
+                                            Total Profit
+                                        </h3>
+                                        <span class="m-widget1__desc">
+											consolidated
+                                        </span>
+                                    </div>
+                                    <div class="col m--align-right">
+										<span class="m-widget1__number m--font-brand">
+											{{ data.total_profit_loss|floatformat:2 }}
+										</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="m-widget1__item">
+                                <div class="row m-row--no-padding align-items-center">
+                                    <div class="col">
+                                        <h3 class="m-widget1__title">
+                                            Total Orders
+                                        </h3>
+                                        <span class="m-widget1__desc">
+											consolidated
+										</span>
+                                    </div>
+                                    <div class="col m--align-right">
+										<span class="m-widget1__number m--font-danger">
+											{{ data.total_orders }}
+										</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="m-widget1__item">
+                                <div class="row m-row--no-padding align-items-center">
+                                    <div class="col">
+                                        <h3 class="m-widget1__title">
+                                            Total Symbols
+                                        </h3>
+                                        <span class="m-widget1__desc">
+                                            consolidated
+										</span>
+                                    </div>
+                                    <div class="col m--align-right">
+										<span class="m-widget1__number m--font-success">
+											{{ data.total_symbols }}
+										</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--end:: Widgets/Stats2-1 -->
+                    </div>
 
+                </div>
             </div>
             <div class="row">
                 <div class="col-xl-12">
@@ -151,9 +210,7 @@
                                         <td>
                                             {{ item.stock_closed_value|floatformat:2 }}
                                         </td>
-                                        <td>
-                                            {{ item.stock_units_held }}
-                                        </td>
+                                        <td>{{item.stock_units_held}}</td>
                                         <td>
                                             {{ item.stock_current_value|floatformat:2 }}
                                         </td>
@@ -165,24 +222,24 @@
                                         </td>
                                         <td>
                                             {% if item.stock_profit_loss > 0 %}
-                                            <button type="button" class="btn btn-success">
+                                            <p style="color: green">
                                             {{ item.stock_profit_loss|floatformat:2 }}
-                                            </button>
+                                            </p>
                                             {% else %}
-                                            <button type="button" class="btn btn-danger">
+                                            <p style="color: red">
                                             {{ item.stock_profit_loss|floatformat:2 }}
-                                            </button>
+                                            </p>
                                             {% endif %}
                                         </td>
                                         <td>
                                             {% if item.stock_pl_percent > 0 %}
-                                            <button type="button" class="btn btn-success">
+                                            <p style="color: green">
 														{{ item.stock_pl_percent|floatformat:2 }}
-                                            </button>
+                                            </p>
                                             {% else %}
-                                            <button type="button" class="btn btn-danger">
+                                            <p style="color: red">
 														{{ item.stock_pl_percent|floatformat:2 }}
-                                            </button>
+                                            </p>
 
                                             {% endif %}
                                         </td>
