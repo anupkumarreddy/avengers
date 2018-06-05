@@ -16,9 +16,11 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 from django.conf.urls import include
+from django.views.generic import TemplateView
 
 urlpatterns = [
     url(r'^maw/', include('ebony_maw.urls')),
     url(r'^juggernaut/', include('juggernaut.urls')),
-    url(r'^admin/', admin.site.urls),
+    url(r'^admin/', admin.site.urls, name='admin_index'),
+    url(r'', TemplateView.as_view(template_name='index.html'), name='project_index'),
 ]

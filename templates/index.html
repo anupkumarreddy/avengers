@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+    <div class="m-grid__item m-grid__item--fluid m-wrapper">
+        <!-- BEGIN: Subheader -->
+        <div class="m-subheader ">
+            <div class="d-flex align-items-center">
+                <div class="mr-auto">
+                    <h3 class="m-subheader__title ">
+                        Available App's
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="m-content">
+            <!--Begin::Section-->
+            <div class="row">
+                <div class="col-xl-12">
+                    <div class="row m-row--no-padding m-row--col-separator-xl">
+                        <div class="col-xl-3">
+                            <div class="m-portlet m-portlet--mobile">
+                                <div class="m-portlet__body  m-portlet__body--no-padding">
+                                    <div class="m-portlet__body ">
+                                        <div class="m-portlet__body">
+                                            <!--begin::Section-->
+                                            <div class="m-section m-section--last">
+                                                <div class="m-section__content">
+                                                    <div class="m-list-search">
+                                                        <div class="m-list-search__results">
+                                                            <span class="m-list-search__result-category m-list-search__result-category--first">
+																	Stock Fundamentals
+																</span>
+                                                            <a href="{% url 'dashboard' 0 %}"
+                                                               class="m-list-search__result-item">
+																	<span class="m-list-search__result-item-icon">
+																		<i class="flaticon-interface-3 m--font-warning"></i>
+																	</span>
+                                                                <span class="m-list-search__result-item-text">
+																		Maw
+																	</span>
+                                                            </a>
+                                                            <a href="#" class="m-list-search__result-item">
+																	<span class="m-list-search__result-item-icon">
+																		<i class="flaticon-share m--font-success"></i>
+																	</span>
+                                                                <span class="m-list-search__result-item-text">
+																		Thanos
+																	</span>
+                                                            </a>
+                                                            <a href="{% url 'juggernaut_index' %}"
+                                                               class="m-list-search__result-item">
+																	<span class="m-list-search__result-item-icon">
+																		<i class="flaticon-paper-plane m--font-info"></i>
+																	</span>
+                                                                <span class="m-list-search__result-item-text">
+                                                                        Juggernaut
+																	</span>
+                                                            </a>
+                                                           	<span class="m-list-search__result-category">
+																	User Management
+																</span>
+                                                            <a href="admin/" class="m-list-search__result-item">
+																	<span class="m-list-search__result-item-icon">
+																		<i class="flaticon-network m--font-info"></i>
+																	</span>
+                                                                <span class="m-list-search__result-item-text">
+                                                                        Admin
+																	</span>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--End::Section-->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block script_content %}
+{% endblock script_content %}
