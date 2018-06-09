@@ -22,5 +22,7 @@ urlpatterns = [
     url(r'^maw/', include('ebony_maw.urls')),
     url(r'^juggernaut/', include('juggernaut.urls')),
     url(r'^admin/', admin.site.urls, name='admin_index'),
-    url(r'', TemplateView.as_view(template_name='index.html'), name='project_index'),
+    url(r'^accounts/', include('allauth.urls')),
+    url(r'^accounts/profile/', TemplateView.as_view(template_name='zeus.html'), name='project_index'),
+
 ]

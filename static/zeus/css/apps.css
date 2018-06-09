@@ -1,0 +1,25 @@
+
+body {
+    background: white;
+}
+div.apps-div {
+    border-radius: 10px;
+    background: white;
+    box-shadow: 4px 4px 4px 5px lightgrey;
+}
+
+.table > tbody > tr > td {
+    padding: 4px;
+    margin: 0px;
+    color: black;
+}
+
+.progress {
+    margin-bottom: 0px;
+    border :1px solid grey;
+    background: ghostwhite;
+
+}
+
+
+

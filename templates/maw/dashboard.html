@@ -58,44 +58,73 @@
                         </div>
                         <div class="col-xl-5">
                             <div class="m-portlet m-portlet--mobile">
-                                <div class="m-portlet__body" id="chart_div">
+                                <div class="m-portlet__body" >
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-xl-4">
-                            <div class="m-portlet m-portlet--mobile">
+                        <div class="col-xl-12">
+                            <div class="m-portlet">
                                 <div class="m-portlet__body  m-portlet__body--no-padding">
-                                    <div class="m-portlet__body" id="pl_div">
+                                    <div class="row m-row--no-padding m-row--col-separator-xl">
+                                        <div class="col-xl-4">
+                                            <!--begin:: Widgets/Daily Sales-->
+                                            <div class="m-widget14">
+                                                <div class="m-widget14__header m--margin-bottom-30">
+                                                    <h3 class="m-widget14__title">
+                                                        Income Statement
+                                                    </h3>
+                                                    <span class="m-widget14__desc">
+													Profit and loss
+												</span>
+                                                </div>
+                                                <div class="m-widget14__chart" id="pl_div" style="height:200px;">
+                                                    <canvas></canvas>
+                                                </div>
+                                            </div>
+                                            <!--end:: Widgets/Daily Sales-->
+                                        </div>
+                                        <div class="col-xl-4">
+                                            <!--begin:: Widgets/Daily Sales-->
+                                            <div class="m-widget14">
+                                                <div class="m-widget14__header m--margin-bottom-30">
+                                                    <h3 class="m-widget14__title">
+                                                        Cash Flow
+                                                    </h3>
+                                                    <span class="m-widget14__desc">
+													Cash flow spending pattern
+												</span>
+                                                </div>
+                                                <div class="m-widget14__chart" id="cf_div" style="height:200px;">
+                                                    <canvas></canvas>
+                                                </div>
+                                            </div>
+                                            <!--end:: Widgets/Daily Sales-->
+                                        </div>
+                                        <div class="col-xl-4">
+                                            <!--begin:: Widgets/Daily Sales-->
+                                            <div class="m-widget14">
+                                                <div class="m-widget14__header m--margin-bottom-30">
+                                                    <h3 class="m-widget14__title">
+                                                        Company financing
+                                                    </h3>
+                                                    <span class="m-widget14__desc">
+													Company funding
+												</span>
+                                                </div>
+                                                <div class="m-widget14__chart" id="chart_div" style="height:200px;">
+                                                    <canvas></canvas>
+                                                </div>
+                                            </div>
+                                            <!--end:: Widgets/Daily Sales-->
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-4">
-                            <div class="m-portlet m-portlet--mobile">
-                                <div class="m-portlet__body  m-portlet__body--no-padding">
-                                    <div class="m-portlet__body" id="cf_div">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
-                    <div class="row">
-                        <div class="col-xl-4" >
-                            <div class="m-portlet m-portlet--mobile">
-                                <div class="m-portlet__body " id="curve_chart">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-4">
 
-                        </div>
-                        <div class="col-xl-4">
-
-                        </div>
-                    </div>
                     <div class="row">
                         <div class="col-xl-12">
                             <div class="m-portlet">
@@ -163,13 +192,13 @@
                                             <div class="m-widget14">
                                                 <div class="m-widget14__header m--margin-bottom-30">
                                                     <h3 class="m-widget14__title">
-                                                        Daily Sales
+                                                        Historical balance Sheet
                                                     </h3>
                                                     <span class="m-widget14__desc">
-													Check out each collumn for more details
+													Company balance sheet for past five years
 												</span>
                                                 </div>
-                                                <div class="m-widget14__chart" style="height:120px;">
+                                                <div class="m-widget14__chart" id="test" style="height:200px;">
                                                     <canvas id="m_chart_daily_sales"></canvas>
                                                 </div>
                                             </div>
@@ -252,7 +281,7 @@
     <script type="text/javascript">
 
         // Load the Visualization API and the corechart package.
-        google.charts.load('current', {'packages': ['corechart']});
+        google.charts.load('current', {'packages': ['corechart', 'bar']});
 
         // Set a callback to run when the Google Visualization API is loaded.
         google.charts.setOnLoadCallback(drawBalanceSheet);
@@ -273,7 +302,7 @@
 
             // Set chart options
             var options = {
-                'title': 'Company financing',
+                //'title': 'Company financing',
                 'width': '100%',
                 'height': 207,
                 is3D: true,
@@ -286,7 +315,8 @@
             chart.draw(data, options);
 
         }
-        function drawProfitLossStatement(){
+
+        function drawProfitLossStatement() {
             // Create the data table.
             var data_pl = new google.visualization.DataTable();
             data_pl.addColumn('string', 'entry');
@@ -311,7 +341,8 @@
             var chart_pl = new google.visualization.PieChart(document.getElementById('pl_div'));
             chart_pl.draw(data_pl, options_pl);
         }
-        function drawCashFlowStatement(){
+
+        function drawCashFlowStatement() {
             // Create the data table.
             var data_pl = new google.visualization.DataTable();
             data_pl.addColumn('string', 'entry');
@@ -323,13 +354,13 @@
                 ['Others', {{ data.cf.others }}],
             ]);
             var data = google.visualization.arrayToDataTable([
-                ['Entry', 'cost', { role: 'style' } ],
+                ['Entry', 'cost', {role: 'style'}],
                 ['Operations', {{ data.cf.operating_activities }}, 'color: green'],
                 ['Investments', {{ data.cf.investing_activities }}, 'color: red'],
                 ['Financing', {{ data.cf.financing_activities }}, 'color: red'],
                 ['Others', {{ data.cf.others }}, 'color: red']
 
-              ]);
+            ]);
 
             // Set chart options
             var options_pl = {
@@ -345,27 +376,31 @@
             var chart_pl = new google.visualization.BarChart(document.getElementById('cf_div'));
             chart_pl.draw(data, options_pl);
         }
+
         function drawBalanceHistory() {
-        var data = google.visualization.arrayToDataTable([
-          ['Year', 'Share Capital', 'Debt', 'Assets'],
-            {% for item in data.balance_hist %}
-                ['{{ item.sheet_year.year }}', {{ item.total_share_holders_fund }}, {{ item.total_non_current_liabilities }}, {{ item.total_non_current_assets }}],
-            {% endfor %}
+            var data = google.visualization.arrayToDataTable([
+                ['Year', 'Share Capital', 'Debt', 'Assets'],
+                {% for item in data.balance_hist %}
+                    ['{{ item.sheet_year.year }}', {{ item.total_share_holders_fund|floatformat:2 }}, {{ item.total_non_current_liabilities|floatformat:2 }}, {{ item.total_non_current_assets|floatformat:2 }}],
+                {% endfor %}
 
-        ]);
+            ]);
 
-        var options = {
-          title: 'Company History',
-          'width': '100%',
-          'height': 207,
-          curveType: 'function',
-          legend: { position: 'bottom' }
-        };
+            var options = {
+                chart: {
+                    title: 'Company History',
+                    subtitle: 'Based on a scale of 1 to 10'
+                    //curveType: 'function',
+                    //legend: { position: 'bottom' }
+                },
+                'width': '100%',
+                'height': '100%'
 
-        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+            };
 
-        chart.draw(data, options);
-      }
+            var chart = new google.visualization.ColumnChart(document.getElementById('test'));
+            chart.draw(data, options);
+        }
 
     </script>
 
